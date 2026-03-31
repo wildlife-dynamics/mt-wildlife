@@ -204,7 +204,9 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(df=convert_tz, **(params_dict.get("filter_coords") or {}))
+        .partial(
+            df=convert_tz, roi_gdf=None, **(params_dict.get("filter_coords") or {})
+        )
         .call()
     )
 
@@ -223,6 +225,8 @@ def main(params: Params):
         .partial(
             df=filter_coords,
             column="extracted_attributes",
+            skip_if_not_exists=True,
+            sort_columns=True,
             **(params_dict.get("normalize_attrs") or {}),
         )
         .call()

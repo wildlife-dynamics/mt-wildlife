@@ -254,6 +254,7 @@ def main(params: Params):
             .set_executor("lithops"),
             partial={
                 "df": DependsOn("convert_tz"),
+                "roi_gdf": None,
             }
             | (params_dict.get("filter_coords") or {}),
             method="call",
@@ -274,6 +275,8 @@ def main(params: Params):
             partial={
                 "df": DependsOn("filter_coords"),
                 "column": "extracted_attributes",
+                "skip_if_not_exists": True,
+                "sort_columns": True,
             }
             | (params_dict.get("normalize_attrs") or {}),
             method="call",

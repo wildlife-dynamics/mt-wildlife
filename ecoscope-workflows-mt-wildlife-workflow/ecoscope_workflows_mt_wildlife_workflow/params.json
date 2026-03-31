@@ -97,13 +97,6 @@
           "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
           "ecoscope:advanced": true
         },
-        "roi_gdf": {
-          "default": null,
-          "title": "Roi Gdf",
-          "type": "ecoscope_workflows.annotations.DataFrame",
-          "description": "The ROI geopandas dataframe, in EPSG: 4326, indexed by ROI name",
-          "ecoscope:advanced": true
-        },
         "roi_name": {
           "default": null,
           "title": "Roi Name",
@@ -122,28 +115,6 @@
       "required": [],
       "type": "object",
       "title": "Filter Coordinates"
-    },
-    "normalize_attrs": {
-      "additionalProperties": false,
-      "properties": {
-        "skip_if_not_exists": {
-          "default": true,
-          "title": "Skip If Not Exists",
-          "type": "boolean",
-          "description": "Skip if the column does not exist.",
-          "ecoscope:advanced": true
-        },
-        "sort_columns": {
-          "default": true,
-          "title": "Sort Columns",
-          "type": "boolean",
-          "description": "Sort new columns alphabetically.",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Normalize Extracted Attributes"
     },
     "featured_list": {
       "additionalProperties": false,
@@ -522,15 +493,8 @@
       "ui:order": [
         "bounding_box",
         "filter_point_coords",
-        "roi_gdf",
         "roi_name",
         "reset_index"
-      ]
-    },
-    "normalize_attrs": {
-      "ui:order": [
-        "skip_if_not_exists",
-        "sort_columns"
       ]
     },
     "ui:order": [
@@ -538,7 +502,6 @@
       "time_range",
       "smart_client_name",
       "filter_coords",
-      "normalize_attrs",
       "featured_list",
       "base_map_defs",
       "persist_sightings",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, confloat, constr
 
@@ -15,20 +15,6 @@ class WorkflowDetails(BaseModel):
     )
     name: str = Field(..., title="Workflow Name")
     description: str | None = Field("", title="Workflow Description")
-
-
-class NormalizeAttrs(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    skip_if_not_exists: bool | None = Field(
-        True,
-        description="Skip if the column does not exist.",
-        title="Skip If Not Exists",
-    )
-    sort_columns: bool | None = Field(
-        True, description="Sort new columns alphabetically.", title="Sort Columns"
-    )
 
 
 class FeaturedList(BaseModel):
@@ -288,11 +274,6 @@ class FilterCoords(BaseModel):
         description="By adding a filter, the workflow will not include events recorded at the specified coordinates.",
         title="Filter Exact Point Coordinates",
     )
-    roi_gdf: Any | None = Field(
-        None,
-        description="The ROI geopandas dataframe, in EPSG: 4326, indexed by ROI name",
-        title="Roi Gdf",
-    )
     roi_name: str | None = Field(None, description="The ROI name", title="Roi Name")
     reset_index: bool | None = Field(
         True, description="Reset index after filtering", title="Reset Index"
@@ -313,9 +294,6 @@ class Params(BaseModel):
     )
     smart_client_name: SmartClientName | None = Field(None, title="Data Source")
     filter_coords: FilterCoords | None = Field(None, title="Filter Coordinates")
-    normalize_attrs: NormalizeAttrs | None = Field(
-        None, title="Normalize Extracted Attributes"
-    )
     featured_list: FeaturedList | None = Field(None, title="Set Featured Species List")
     base_map_defs: BaseMapDefs | None = Field(None, title="Base Maps")
     persist_sightings: PersistSightings | None = Field(

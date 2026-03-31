@@ -100,6 +100,7 @@ workflow:
         task: apply_reloc_coord_filter
         partial:
           df: ${{ workflow.convert_tz.return }}
+          roi_gdf: null
 
       - name: Normalize Extracted Attributes
         id: normalize_attrs
@@ -107,6 +108,8 @@ workflow:
         partial:
           df: ${{ workflow.filter_coords.return }}
           column: "extracted_attributes"
+          skip_if_not_exists: true
+          sort_columns: true
 
       - name: Process Sighting Columns
         id: process_sightings

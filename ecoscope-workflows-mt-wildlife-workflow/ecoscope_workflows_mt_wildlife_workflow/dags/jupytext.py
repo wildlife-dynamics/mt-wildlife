@@ -268,7 +268,6 @@ convert_tz = (
 filter_coords_params = dict(
     bounding_box=...,
     filter_point_coords=...,
-    roi_gdf=...,
     roi_name=...,
     reset_index=...,
 )
@@ -288,7 +287,7 @@ filter_coords = (
         ],
         unpack_depth=1,
     )
-    .partial(df=convert_tz, **filter_coords_params)
+    .partial(df=convert_tz, roi_gdf=None, **filter_coords_params)
     .call()
 )
 
@@ -299,10 +298,7 @@ filter_coords = (
 # %%
 # parameters
 
-normalize_attrs_params = dict(
-    skip_if_not_exists=...,
-    sort_columns=...,
-)
+normalize_attrs_params = dict()
 
 # %%
 # call the task
@@ -319,7 +315,13 @@ normalize_attrs = (
         ],
         unpack_depth=1,
     )
-    .partial(df=filter_coords, column="extracted_attributes", **normalize_attrs_params)
+    .partial(
+        df=filter_coords,
+        column="extracted_attributes",
+        skip_if_not_exists=True,
+        sort_columns=True,
+        **normalize_attrs_params,
+    )
     .call()
 )
 
