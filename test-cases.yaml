@@ -33,4 +33,4 @@ base:
     persist_sightings:
       filetypes: ["parquet"]
     wildlife_report:
-      template_path: "/Users/yunwu/MEP/wt/mt-wildlife/resources/templates/mt_wildlife_report_template.docx"
+      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
