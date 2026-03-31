@@ -26,6 +26,9 @@ from ecoscope_workflows_core.tasks.filter import set_time_range as set_time_rang
 from ecoscope_workflows_core.tasks.groupby import set_groupers as set_groupers
 from ecoscope_workflows_core.tasks.groupby import split_groups as split_groups
 from ecoscope_workflows_core.tasks.io import persist_text as persist_text
+from ecoscope_workflows_core.tasks.io import (
+    set_smart_connection as set_smart_connection,
+)
 from ecoscope_workflows_core.tasks.results import gather_dashboard as gather_dashboard
 from ecoscope_workflows_core.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
@@ -35,7 +38,6 @@ from ecoscope_workflows_core.tasks.skip import never as never
 from ecoscope_workflows_core.tasks.transformation import (
     convert_values_to_timezone as convert_values_to_timezone,
 )
-from ecoscope_workflows_ext_custom.tasks.io import load_df as load_df
 from ecoscope_workflows_ext_custom.tasks.io import (
     persist_df_wrapper as persist_df_wrapper,
 )
@@ -50,6 +52,9 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     filter_row_values as filter_row_values,
 )
 from ecoscope_workflows_ext_ecoscope.tasks.analysis import summarize_df as summarize_df
+from ecoscope_workflows_ext_ecoscope.tasks.io import (
+    get_events_from_smart as get_events_from_smart,
+)
 from ecoscope_workflows_ext_ecoscope.tasks.results import (
     create_point_layer as create_point_layer,
 )
@@ -158,22 +163,21 @@ get_timezone = (
 
 
 # %% [markdown]
-# ## Load Events
+# ## Data Source
 
 # %%
 # parameters
 
-smart_events_params = dict(
-    file_path=...,
-    layer=...,
+smart_client_name_params = dict(
+    data_source=...,
 )
 
 # %%
 # call the task
 
 
-smart_events = (
-    load_df.set_task_instance_id("smart_events")
+smart_client_name = (
+    set_smart_connection.set_task_instance_id("smart_client_name")
     .handle_errors()
     .with_tracing()
     .skipif(
@@ -183,7 +187,41 @@ smart_events = (
         ],
         unpack_depth=1,
     )
-    .partial(deserialize_json=False, **smart_events_params)
+    .partial(**smart_client_name_params)
+    .call()
+)
+
+
+# %% [markdown]
+# ## Get SMART Events
+
+# %%
+# parameters
+
+smart_events_params = dict()
+
+# %%
+# call the task
+
+
+smart_events = (
+    get_events_from_smart.set_task_instance_id("smart_events")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        client=smart_client_name,
+        time_range=time_range,
+        ca_uuid="735606d2-c34e-49c3-a45b-7496ca834e58",
+        language_uuid="13451893-86af-4ec0-beac-2b8e0c2482b5",
+        **smart_events_params,
+    )
     .call()
 )
 

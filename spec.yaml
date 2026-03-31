@@ -66,26 +66,18 @@ workflow:
     partial:
       time_range: ${{ workflow.time_range.return }}
 
-  # Phase 2: Load from local file
-  - name: Load Events
-    id: smart_events
-    task: ecoscope_workflows_ext_custom.tasks.io.load_df
-    partial:
-      deserialize_json: false
+  - name: Data Source
+    id: smart_client_name
+    task: set_smart_connection
 
-  # Phase 3: Uncomment below, remove load_df above, and add set_smart_connection
-  # - name: Data Source
-  #   id: smart_client_name
-  #   task: set_smart_connection
-  #
-  # - name: Get SMART Events
-  #   id: smart_events
-  #   task: ecoscope_workflows_ext_ecoscope.tasks.io.smart_events_from_smart
-  #   partial:
-  #     client: ${{ workflow.smart_client_name.return }}
-  #     time_range: ${{ workflow.time_range.return }}
-  #     ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
-  #     language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
+  - name: Get SMART Events
+    id: smart_events
+    task: get_events_from_smart
+    partial:
+      client: ${{ workflow.smart_client_name.return }}
+      time_range: ${{ workflow.time_range.return }}
+      ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
+      language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
 
   # Processing
   - title: Process Sightings

@@ -53,27 +53,20 @@
       "description": "Choose the period of time to analyze.",
       "title": "Time Range"
     },
-    "smart_events": {
+    "smart_client_name": {
       "additionalProperties": false,
       "properties": {
-        "file_path": {
-          "title": "File Path",
-          "type": "string",
-          "description": "Path to the file to load. Supported formats: .parquet, .geoparquet, .geojson, .json, .gpkg, .csv, .shp"
-        },
-        "layer": {
-          "default": null,
-          "title": "Layer",
-          "type": "string",
-          "description": "Layer name for GeoPackage files (optional, only used for .gpkg files)",
-          "ecoscope:advanced": true
+        "data_source": {
+          "$ref": "#/$defs/SMARTConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
         }
       },
       "required": [
-        "file_path"
+        "data_source"
       ],
       "type": "object",
-      "title": "Load Events"
+      "title": "Data Source"
     },
     "filter_coords": {
       "additionalProperties": false,
@@ -425,6 +418,19 @@
       "title": "TimezoneInfo",
       "type": "object"
     },
+    "SMARTConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "SMARTConnection",
+      "type": "object"
+    },
     "BoundingBox": {
       "properties": {
         "min_y": {
@@ -490,12 +496,6 @@
         "timezone"
       ]
     },
-    "smart_events": {
-      "ui:order": [
-        "file_path",
-        "layer"
-      ]
-    },
     "filter_coords": {
       "ui:order": [
         "bounding_box",
@@ -508,7 +508,7 @@
     "ui:order": [
       "workflow_details",
       "time_range",
-      "smart_events",
+      "smart_client_name",
       "filter_coords",
       "featured_list",
       "base_map_defs",
