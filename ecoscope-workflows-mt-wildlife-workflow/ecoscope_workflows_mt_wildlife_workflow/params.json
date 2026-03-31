@@ -53,82 +53,20 @@
       "description": "Choose the period of time to analyze.",
       "title": "Time Range"
     },
-    "smart_events": {
+    "smart_client_name": {
       "additionalProperties": false,
       "properties": {
-        "file_path": {
-          "title": "File Path",
-          "type": "string",
-          "description": "Path to the file to load. Supported formats: .parquet, .geoparquet, .geojson, .json, .gpkg, .csv, .shp"
-        },
-        "layer": {
-          "default": null,
-          "title": "Layer",
-          "type": "string",
-          "description": "Layer name for GeoPackage files (optional, only used for .gpkg files)",
-          "ecoscope:advanced": true
+        "data_source": {
+          "$ref": "#/$defs/SMARTConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
         }
       },
       "required": [
-        "file_path"
+        "data_source"
       ],
       "type": "object",
-      "title": "Load Events"
-    },
-    "filter_coords": {
-      "additionalProperties": false,
-      "properties": {
-        "bounding_box": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/BoundingBox"
-            }
-          ],
-          "default": {
-            "min_y": -90.0,
-            "max_y": 90.0,
-            "min_x": -180.0,
-            "max_x": 180.0
-          },
-          "title": "Bounding Box",
-          "description": "Filter events to inside these bounding coordinates.",
-          "ecoscope:advanced": true
-        },
-        "filter_point_coords": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/Coordinate"
-          },
-          "title": "Filter Exact Point Coordinates",
-          "type": "array",
-          "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
-          "ecoscope:advanced": true
-        },
-        "roi_gdf": {
-          "default": null,
-          "title": "Roi Gdf",
-          "type": "ecoscope_workflows.annotations.DataFrame",
-          "description": "The ROI geopandas dataframe, in EPSG: 4326, indexed by ROI name",
-          "ecoscope:advanced": true
-        },
-        "roi_name": {
-          "default": null,
-          "title": "Roi Name",
-          "type": "string",
-          "description": "The ROI name",
-          "ecoscope:advanced": true
-        },
-        "reset_index": {
-          "default": true,
-          "title": "Reset Index",
-          "type": "boolean",
-          "description": "Reset index after filtering",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Filter Coordinates"
+      "title": "Data Source"
     },
     "featured_list": {
       "additionalProperties": false,
@@ -425,54 +363,17 @@
       "title": "TimezoneInfo",
       "type": "object"
     },
-    "BoundingBox": {
+    "SMARTConnection": {
       "properties": {
-        "min_y": {
-          "default": -90.0,
-          "ecoscope:advanced": true,
-          "title": "Min Latitude",
-          "type": "number"
-        },
-        "max_y": {
-          "default": 90.0,
-          "ecoscope:advanced": true,
-          "title": "Max Latitude",
-          "type": "number"
-        },
-        "min_x": {
-          "default": -180.0,
-          "ecoscope:advanced": true,
-          "title": "Min Longitude",
-          "type": "number"
-        },
-        "max_x": {
-          "default": 180.0,
-          "ecoscope:advanced": true,
-          "title": "Max Longitude",
-          "type": "number"
-        }
-      },
-      "title": "BoundingBox",
-      "type": "object"
-    },
-    "Coordinate": {
-      "properties": {
-        "y": {
-          "description": "Example -0.15293",
-          "title": "Latitude",
-          "type": "number"
-        },
-        "x": {
-          "description": "Example 37.30906",
-          "title": "Longitude",
-          "type": "number"
+        "name": {
+          "title": "Data Source",
+          "type": "string"
         }
       },
       "required": [
-        "y",
-        "x"
+        "name"
       ],
-      "title": "Coordinate",
+      "title": "SMARTConnection",
       "type": "object"
     }
   },
@@ -490,26 +391,10 @@
         "timezone"
       ]
     },
-    "smart_events": {
-      "ui:order": [
-        "file_path",
-        "layer"
-      ]
-    },
-    "filter_coords": {
-      "ui:order": [
-        "bounding_box",
-        "filter_point_coords",
-        "roi_gdf",
-        "roi_name",
-        "reset_index"
-      ]
-    },
     "ui:order": [
       "workflow_details",
       "time_range",
-      "smart_events",
-      "filter_coords",
+      "smart_client_name",
       "featured_list",
       "base_map_defs",
       "persist_sightings",

@@ -20,19 +20,23 @@ platforms = [
 linux = "4.4.0"
 
 [dependencies.ecoscope-workflows-core]
-version = ">=0.22.17,<0.23.0"
+version = ">=0.22.18,<0.23.0"
 channel = "https://repo.prefix.dev/ecoscope-workflows/"
 
 [dependencies.ecoscope-workflows-ext-ecoscope]
-version = ">=0.22.17,<0.23.0"
+version = ">=0.22.18,<0.23.0"
 channel = "https://repo.prefix.dev/ecoscope-workflows/"
 
 [dependencies.ecoscope-workflows-ext-custom]
-version = ">=0.0.40,<0.1.0"
+version = ">=0.0.41,<0.1.0"
+channel = "https://repo.prefix.dev/ecoscope-workflows-custom/"
+
+[dependencies.pydeck]
+version = "==0.0.2"
 channel = "https://repo.prefix.dev/ecoscope-workflows-custom/"
 
 [feature.runner.dependencies.ecoscope-workflows-runner]
-version = ">=0.22.17,<0.23.0"
+version = ">=0.22.18,<0.23.0"
 channel = "https://repo.prefix.dev/ecoscope-workflows/"
 
 [feature.runner.tasks]

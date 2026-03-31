@@ -2,26 +2,22 @@ id: mt_wildlife
 
 requirements:
   - name: ecoscope-workflows-core
-    version: ">=0.22.17, <0.23.0"
+    version: ">=0.22.18, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.22.17, <0.23.0"
+    version: ">=0.22.18, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.40, <0.1.0"
+    version: ">=0.0.41, <0.1.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+  - name: pydeck
+    version: "0.0.2"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 
 rjsf-overrides:
   properties:
-    Process Sightings.properties.filter_coords.properties.bounding_box.default:
-      min_x: 33.0
-      min_y: -3.0
-      max_x: 36.0
-      max_y: 0.0
-    Process Sightings.properties.filter_coords.properties.filter_point_coords.default:
-      - {x: 180.0, y: 90.0}
-      - {x: 0.0, y: 0.0}
-      - {x: 1.0, y: 1.0}
+    Process Sightings.properties.featured_list.title: "Featured Species"
+    Process Sightings.properties.featured_list.description: "Each featured species generates its own map. All remaining species are combined into one map."
     Process Sightings.properties.featured_list.properties.vars.title: "Species"
     Process Sightings.properties.featured_list.properties.vars.default:
       - "African Buffalo"
@@ -38,9 +34,6 @@ rjsf-overrides:
     persist_sightings.properties.filetypes.default: ["parquet"]
     persist_sightings.properties.filetypes.items.enum: ["csv", "parquet"]
     wildlife_report.properties.template_path.default: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
-
-  uiSchema:
-    Process Sightings.filter_coords.filter_point_coords.items.ui:options.label: false
 
 task-instance-defaults:
   skipif:
@@ -66,26 +59,18 @@ workflow:
     partial:
       time_range: ${{ workflow.time_range.return }}
 
-  # Phase 2: Load from local file
-  - name: Load Events
-    id: smart_events
-    task: ecoscope_workflows_ext_custom.tasks.io.load_df
-    partial:
-      deserialize_json: false
+  - name: Data Source
+    id: smart_client_name
+    task: set_smart_connection
 
-  # Phase 3: Uncomment below, remove load_df above, and add set_smart_connection
-  # - name: Data Source
-  #   id: smart_client_name
-  #   task: set_smart_connection
-  #
-  # - name: Get SMART Events
-  #   id: smart_events
-  #   task: ecoscope_workflows_ext_ecoscope.tasks.io.smart_events_from_smart
-  #   partial:
-  #     client: ${{ workflow.smart_client_name.return }}
-  #     time_range: ${{ workflow.time_range.return }}
-  #     ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
-  #     language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
+  - name: Get SMART Events
+    id: smart_events
+    task: get_events_from_smart
+    partial:
+      client: ${{ workflow.smart_client_name.return }}
+      time_range: ${{ workflow.time_range.return }}
+      ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
+      language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
 
   # Processing
   - title: Process Sightings
@@ -105,25 +90,49 @@ workflow:
         task: apply_reloc_coord_filter
         partial:
           df: ${{ workflow.convert_tz.return }}
+          roi_gdf: null
+          roi_name: null
+          reset_index: false
+          bounding_box:
+            min_x: -180.0
+            max_x: 180.0
+            min_y: -90.0
+            max_y: 90.0
+          filter_point_coords:
+            - {x: 180.0, y: 90.0}
+            - {x: 0.0, y: 0.0}
+            - {x: 1.0, y: 1.0}
+
+      - name: Normalize Extracted Attributes
+        id: normalize_attrs
+        task: normalize_json_column
+        partial:
+          df: ${{ workflow.filter_coords.return }}
+          column: "extracted_attributes"
+          skip_if_not_exists: true
+          sort_columns: true
 
       - name: Process Sighting Columns
         id: process_sightings
         task: apply_sql_query
         partial:
-          df: ${{ workflow.filter_coords.return }}
-          columns: null
+          df: ${{ workflow.normalize_attrs.return }}
+          columns:
+            - uuid
+            - event_type
+            - X
+            - Y
+            - time
+            - geometry
+            - "extracted_attributes__Species"
+            - "extracted_attributes__Number of Wildlife observed"
           query: >-
             SELECT uuid, X, Y, time, geometry,
-              json_extract(extracted_attributes, '$.Species') AS "Species",
-              (COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Wildlife observed"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Age or Sex Unknown"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Females"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Males"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Young"') AS REAL), 0))
-              AS "Count"
+              "extracted_attributes__Species" AS "Species",
+              COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"
             FROM df
             WHERE event_type = 'Wildlife - direct observation'
-              AND json_extract(extracted_attributes, '$.Species') IS NOT NULL
+              AND "extracted_attributes__Species" IS NOT NULL
 
       - name: Apply Colormap
         id: sightings_colormap

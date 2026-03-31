@@ -53,101 +53,26 @@
       "description": "Choose the period of time to analyze.",
       "title": "Time Range"
     },
-    "smart_events": {
+    "smart_client_name": {
       "additionalProperties": false,
       "properties": {
-        "file_path": {
-          "title": "File Path",
-          "type": "string",
-          "description": "Path to the file to load. Supported formats: .parquet, .geoparquet, .geojson, .json, .gpkg, .csv, .shp"
-        },
-        "layer": {
-          "default": null,
-          "title": "Layer",
-          "type": "string",
-          "description": "Layer name for GeoPackage files (optional, only used for .gpkg files)",
-          "ecoscope:advanced": true
+        "data_source": {
+          "$ref": "#/$defs/SMARTConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
         }
       },
       "required": [
-        "file_path"
+        "data_source"
       ],
       "type": "object",
-      "title": "Load Events"
+      "title": "Data Source"
     },
     "Process Sightings": {
       "type": "object",
       "description": "Process SMART events into wildlife sighting records.",
       "ecoscope:task_group": true,
       "properties": {
-        "filter_coords": {
-          "additionalProperties": false,
-          "properties": {
-            "bounding_box": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/BoundingBox"
-                }
-              ],
-              "default": {
-                "min_x": 33.0,
-                "min_y": -3.0,
-                "max_x": 36.0,
-                "max_y": 0.0
-              },
-              "title": "Bounding Box",
-              "description": "Filter events to inside these bounding coordinates.",
-              "ecoscope:advanced": true
-            },
-            "filter_point_coords": {
-              "default": [
-                {
-                  "x": 180.0,
-                  "y": 90.0
-                },
-                {
-                  "x": 0.0,
-                  "y": 0.0
-                },
-                {
-                  "x": 1.0,
-                  "y": 1.0
-                }
-              ],
-              "items": {
-                "$ref": "#/$defs/Coordinate"
-              },
-              "title": "Filter Exact Point Coordinates",
-              "type": "array",
-              "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
-              "ecoscope:advanced": true
-            },
-            "roi_gdf": {
-              "default": null,
-              "title": "Roi Gdf",
-              "type": "ecoscope_workflows.annotations.DataFrame",
-              "description": "The ROI geopandas dataframe, in EPSG: 4326, indexed by ROI name",
-              "ecoscope:advanced": true
-            },
-            "roi_name": {
-              "default": null,
-              "title": "Roi Name",
-              "type": "string",
-              "description": "The ROI name",
-              "ecoscope:advanced": true
-            },
-            "reset_index": {
-              "default": true,
-              "title": "Reset Index",
-              "type": "boolean",
-              "description": "Reset index after filtering",
-              "ecoscope:advanced": true
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Filter Coordinates"
-        },
         "featured_list": {
           "additionalProperties": false,
           "properties": {
@@ -173,7 +98,8 @@
             "vars"
           ],
           "type": "object",
-          "title": "Set Featured Species List"
+          "title": "Featured Species",
+          "description": "Each featured species generates its own map. All remaining species are combined into one map."
         }
       }
     },
@@ -450,54 +376,17 @@
       "title": "TimezoneInfo",
       "type": "object"
     },
-    "BoundingBox": {
+    "SMARTConnection": {
       "properties": {
-        "min_y": {
-          "default": -90.0,
-          "ecoscope:advanced": true,
-          "title": "Min Latitude",
-          "type": "number"
-        },
-        "max_y": {
-          "default": 90.0,
-          "ecoscope:advanced": true,
-          "title": "Max Latitude",
-          "type": "number"
-        },
-        "min_x": {
-          "default": -180.0,
-          "ecoscope:advanced": true,
-          "title": "Min Longitude",
-          "type": "number"
-        },
-        "max_x": {
-          "default": 180.0,
-          "ecoscope:advanced": true,
-          "title": "Max Longitude",
-          "type": "number"
-        }
-      },
-      "title": "BoundingBox",
-      "type": "object"
-    },
-    "Coordinate": {
-      "properties": {
-        "y": {
-          "description": "Example -0.15293",
-          "title": "Latitude",
-          "type": "number"
-        },
-        "x": {
-          "description": "Example 37.30906",
-          "title": "Longitude",
-          "type": "number"
+        "name": {
+          "title": "Data Source",
+          "type": "string"
         }
       },
       "required": [
-        "y",
-        "x"
+        "name"
       ],
-      "title": "Coordinate",
+      "title": "SMARTConnection",
       "type": "object"
     }
   },
@@ -515,38 +404,10 @@
         "timezone"
       ]
     },
-    "smart_events": {
-      "ui:order": [
-        "file_path",
-        "layer"
-      ]
-    },
-    "Process Sightings": {
-      "ui:order": [
-        "filter_coords",
-        "featured_list"
-      ],
-      "filter_coords": {
-        "ui:order": [
-          "bounding_box",
-          "filter_point_coords",
-          "roi_gdf",
-          "roi_name",
-          "reset_index"
-        ],
-        "filter_point_coords": {
-          "items": {
-            "ui:options": {
-              "label": false
-            }
-          }
-        }
-      }
-    },
     "ui:order": [
       "workflow_details",
       "time_range",
-      "smart_events",
+      "smart_client_name",
       "Process Sightings",
       "base_map_defs",
       "persist_sightings",

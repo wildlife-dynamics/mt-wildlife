@@ -6,15 +6,16 @@ base:
       name: "Mara Triangle Wildlife Sightings"
       description: "Wildlife sighting analysis for Mara Triangle conservancy."
     time_range:
-      since: "2026-01-01T00:00:00Z"
-      until: "2026-01-31T23:59:59Z"
+      since: "2026-01-01T00:00:00"
+      until: "2026-01-31T23:59:59"
       timezone:
         label: "(GMT+03:00) Nairobi"
         tzCode: "Africa/Nairobi"
         name: "East Africa Time"
         utc: "+03:00"
-    smart_events:
-      file_path: "/Users/yunwu/MEP/wt/mt-wildlife/resources/mock-data/mara_triangle_raw_events.parquet"
+    smart_client_name:
+      data_source:
+        name: "mara_triangle"
     featured_list:
       vars:
         - "African Buffalo"
@@ -32,4 +33,4 @@ base:
     persist_sightings:
       filetypes: ["parquet"]
     wildlife_report:
-      template_path: "/Users/yunwu/MEP/wt/mt-wildlife/resources/templates/mt_wildlife_report_template.docx"
+      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
