@@ -17,6 +17,20 @@ class WorkflowDetails(BaseModel):
     description: str | None = Field("", title="Workflow Description")
 
 
+class NormalizeAttrs(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    skip_if_not_exists: bool | None = Field(
+        True,
+        description="Skip if the column does not exist.",
+        title="Skip If Not Exists",
+    )
+    sort_columns: bool | None = Field(
+        True, description="Sort new columns alphabetically.", title="Sort Columns"
+    )
+
+
 class FeaturedList(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -299,6 +313,9 @@ class Params(BaseModel):
     )
     smart_client_name: SmartClientName | None = Field(None, title="Data Source")
     filter_coords: FilterCoords | None = Field(None, title="Filter Coordinates")
+    normalize_attrs: NormalizeAttrs | None = Field(
+        None, title="Normalize Extracted Attributes"
+    )
     featured_list: FeaturedList | None = Field(None, title="Set Featured Species List")
     base_map_defs: BaseMapDefs | None = Field(None, title="Base Maps")
     persist_sightings: PersistSightings | None = Field(

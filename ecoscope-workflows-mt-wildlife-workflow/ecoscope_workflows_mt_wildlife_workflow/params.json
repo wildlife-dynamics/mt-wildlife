@@ -123,6 +123,28 @@
       "type": "object",
       "title": "Filter Coordinates"
     },
+    "normalize_attrs": {
+      "additionalProperties": false,
+      "properties": {
+        "skip_if_not_exists": {
+          "default": true,
+          "title": "Skip If Not Exists",
+          "type": "boolean",
+          "description": "Skip if the column does not exist.",
+          "ecoscope:advanced": true
+        },
+        "sort_columns": {
+          "default": true,
+          "title": "Sort Columns",
+          "type": "boolean",
+          "description": "Sort new columns alphabetically.",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Normalize Extracted Attributes"
+    },
     "featured_list": {
       "additionalProperties": false,
       "properties": {
@@ -505,11 +527,18 @@
         "reset_index"
       ]
     },
+    "normalize_attrs": {
+      "ui:order": [
+        "skip_if_not_exists",
+        "sort_columns"
+      ]
+    },
     "ui:order": [
       "workflow_details",
       "time_range",
       "smart_client_name",
       "filter_coords",
+      "normalize_attrs",
       "featured_list",
       "base_map_defs",
       "persist_sightings",

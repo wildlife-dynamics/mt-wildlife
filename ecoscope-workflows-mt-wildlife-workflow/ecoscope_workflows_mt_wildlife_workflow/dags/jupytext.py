@@ -69,6 +69,9 @@ from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
 from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
     apply_reloc_coord_filter as apply_reloc_coord_filter,
 )
+from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
+    normalize_json_column as normalize_json_column,
+)
 
 # %% [markdown]
 # ## Workflow Details
@@ -291,6 +294,37 @@ filter_coords = (
 
 
 # %% [markdown]
+# ## Normalize Extracted Attributes
+
+# %%
+# parameters
+
+normalize_attrs_params = dict(
+    skip_if_not_exists=...,
+    sort_columns=...,
+)
+
+# %%
+# call the task
+
+
+normalize_attrs = (
+    normalize_json_column.set_task_instance_id("normalize_attrs")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(df=filter_coords, column="extracted_attributes", **normalize_attrs_params)
+    .call()
+)
+
+
+# %% [markdown]
 # ## Process Sighting Columns
 
 # %%
@@ -314,9 +348,18 @@ process_sightings = (
         unpack_depth=1,
     )
     .partial(
-        df=filter_coords,
-        columns=None,
-        query="SELECT uuid, X, Y, time, geometry,\n  json_extract(extracted_attributes, '$.Species') AS \"Species\",\n  (COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Wildlife observed\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Age or Sex Unknown\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Adult Females\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Adult Males\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Young\"') AS REAL), 0))\n  AS \"Count\"\nFROM df WHERE event_type = 'Wildlife - direct observation'\n  AND json_extract(extracted_attributes, '$.Species') IS NOT NULL",
+        df=normalize_attrs,
+        columns=[
+            "uuid",
+            "event_type",
+            "X",
+            "Y",
+            "time",
+            "geometry",
+            "extracted_attributes__Species",
+            "extracted_attributes__Number of Wildlife observed",
+        ],
+        query='SELECT uuid, X, Y, time, geometry,\n  "extracted_attributes__Species" AS "Species",\n  COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"\nFROM df WHERE event_type = \'Wildlife - direct observation\'\n  AND "extracted_attributes__Species" IS NOT NULL',
         **process_sightings_params,
     )
     .call()

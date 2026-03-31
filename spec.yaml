@@ -101,24 +101,34 @@ workflow:
         partial:
           df: ${{ workflow.convert_tz.return }}
 
+      - name: Normalize Extracted Attributes
+        id: normalize_attrs
+        task: normalize_json_column
+        partial:
+          df: ${{ workflow.filter_coords.return }}
+          column: "extracted_attributes"
+
       - name: Process Sighting Columns
         id: process_sightings
         task: apply_sql_query
         partial:
-          df: ${{ workflow.filter_coords.return }}
-          columns: null
+          df: ${{ workflow.normalize_attrs.return }}
+          columns:
+            - uuid
+            - event_type
+            - X
+            - Y
+            - time
+            - geometry
+            - "extracted_attributes__Species"
+            - "extracted_attributes__Number of Wildlife observed"
           query: >-
             SELECT uuid, X, Y, time, geometry,
-              json_extract(extracted_attributes, '$.Species') AS "Species",
-              (COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Wildlife observed"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Age or Sex Unknown"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Females"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Males"') AS REAL), 0)
-              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Young"') AS REAL), 0))
-              AS "Count"
+              "extracted_attributes__Species" AS "Species",
+              COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"
             FROM df
             WHERE event_type = 'Wildlife - direct observation'
-              AND json_extract(extracted_attributes, '$.Species') IS NOT NULL
+              AND "extracted_attributes__Species" IS NOT NULL
 
       - name: Apply Colormap
         id: sightings_colormap

@@ -60,6 +60,9 @@ from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
 from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
     apply_reloc_coord_filter as apply_reloc_coord_filter,
 )
+from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
+    normalize_json_column as normalize_json_column,
+)
 
 from ..params import Params
 
@@ -75,7 +78,8 @@ def main(params: Params):
         "smart_events": ["smart_client_name", "time_range"],
         "convert_tz": ["smart_events", "get_timezone"],
         "filter_coords": ["convert_tz"],
-        "process_sightings": ["filter_coords"],
+        "normalize_attrs": ["filter_coords"],
+        "process_sightings": ["normalize_attrs"],
         "sightings_colormap": ["process_sightings"],
         "featured_list": [],
         "featured_species": ["sightings_colormap", "featured_list"],
@@ -240,6 +244,26 @@ def main(params: Params):
             | (params_dict.get("filter_coords") or {}),
             method="call",
         ),
+        "normalize_attrs": Node(
+            async_task=normalize_json_column.validate()
+            .set_task_instance_id("normalize_attrs")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "df": DependsOn("filter_coords"),
+                "column": "extracted_attributes",
+            }
+            | (params_dict.get("normalize_attrs") or {}),
+            method="call",
+        ),
         "process_sightings": Node(
             async_task=apply_sql_query.validate()
             .set_task_instance_id("process_sightings")
@@ -254,9 +278,18 @@ def main(params: Params):
             )
             .set_executor("lithops"),
             partial={
-                "df": DependsOn("filter_coords"),
-                "columns": None,
-                "query": "SELECT uuid, X, Y, time, geometry,\n  json_extract(extracted_attributes, '$.Species') AS \"Species\",\n  (COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Wildlife observed\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Age or Sex Unknown\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Adult Females\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Adult Males\"') AS REAL), 0)\n  + COALESCE(CAST(json_extract(extracted_attributes, '$.\"Number of Young\"') AS REAL), 0))\n  AS \"Count\"\nFROM df WHERE event_type = 'Wildlife - direct observation'\n  AND json_extract(extracted_attributes, '$.Species') IS NOT NULL",
+                "df": DependsOn("normalize_attrs"),
+                "columns": [
+                    "uuid",
+                    "event_type",
+                    "X",
+                    "Y",
+                    "time",
+                    "geometry",
+                    "extracted_attributes__Species",
+                    "extracted_attributes__Number of Wildlife observed",
+                ],
+                "query": 'SELECT uuid, X, Y, time, geometry,\n  "extracted_attributes__Species" AS "Species",\n  COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"\nFROM df WHERE event_type = \'Wildlife - direct observation\'\n  AND "extracted_attributes__Species" IS NOT NULL',
             }
             | (params_dict.get("process_sightings") or {}),
             method="call",

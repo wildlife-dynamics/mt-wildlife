@@ -13,8 +13,9 @@ base:
         tzCode: "Africa/Nairobi"
         name: "East Africa Time"
         utc: "+03:00"
-    smart_events:
-      file_path: "/Users/yunwu/MEP/wt/mt-wildlife/resources/mock-data/mara_triangle_raw_events.parquet"
+    smart_client_name:
+      data_source:
+        name: "mara_triangle"
     featured_list:
       vars:
         - "African Buffalo"
