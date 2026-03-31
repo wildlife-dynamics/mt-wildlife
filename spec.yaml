@@ -16,15 +16,8 @@ requirements:
 
 rjsf-overrides:
   properties:
-    Process Sightings.properties.filter_coords.properties.bounding_box.default:
-      min_x: 33.0
-      min_y: -3.0
-      max_x: 36.0
-      max_y: 0.0
-    Process Sightings.properties.filter_coords.properties.filter_point_coords.default:
-      - {x: 180.0, y: 90.0}
-      - {x: 0.0, y: 0.0}
-      - {x: 1.0, y: 1.0}
+    Process Sightings.properties.featured_list.title: "Featured Species"
+    Process Sightings.properties.featured_list.description: "Each featured species generates its own map. All remaining species are combined into one map."
     Process Sightings.properties.featured_list.properties.vars.title: "Species"
     Process Sightings.properties.featured_list.properties.vars.default:
       - "African Buffalo"
@@ -41,9 +34,6 @@ rjsf-overrides:
     persist_sightings.properties.filetypes.default: ["parquet"]
     persist_sightings.properties.filetypes.items.enum: ["csv", "parquet"]
     wildlife_report.properties.template_path.default: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
-
-  uiSchema:
-    Process Sightings.filter_coords.filter_point_coords.items.ui:options.label: false
 
 task-instance-defaults:
   skipif:
@@ -103,6 +93,15 @@ workflow:
           roi_gdf: null
           roi_name: null
           reset_index: false
+          bounding_box:
+            min_x: -180.0
+            max_x: 180.0
+            min_y: -90.0
+            max_y: 90.0
+          filter_point_coords:
+            - {x: 180.0, y: 90.0}
+            - {x: 0.0, y: 0.0}
+            - {x: 1.0, y: 1.0}
 
       - name: Normalize Extracted Attributes
         id: normalize_attrs

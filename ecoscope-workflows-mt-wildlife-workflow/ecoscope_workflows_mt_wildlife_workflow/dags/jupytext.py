@@ -265,10 +265,7 @@ convert_tz = (
 # %%
 # parameters
 
-filter_coords_params = dict(
-    bounding_box=...,
-    filter_point_coords=...,
-)
+filter_coords_params = dict()
 
 # %%
 # call the task
@@ -290,6 +287,12 @@ filter_coords = (
         roi_gdf=None,
         roi_name=None,
         reset_index=False,
+        bounding_box={"min_x": -180.0, "max_x": 180.0, "min_y": -90.0, "max_y": 90.0},
+        filter_point_coords=[
+            {"x": 180.0, "y": 90.0},
+            {"x": 0.0, "y": 0.0},
+            {"x": 1.0, "y": 1.0},
+        ],
         **filter_coords_params,
     )
     .call()

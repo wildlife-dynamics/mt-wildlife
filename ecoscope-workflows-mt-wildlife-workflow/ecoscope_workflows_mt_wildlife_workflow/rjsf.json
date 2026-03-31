@@ -73,53 +73,6 @@
       "description": "Process SMART events into wildlife sighting records.",
       "ecoscope:task_group": true,
       "properties": {
-        "filter_coords": {
-          "additionalProperties": false,
-          "properties": {
-            "bounding_box": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/BoundingBox"
-                }
-              ],
-              "default": {
-                "min_x": 33.0,
-                "min_y": -3.0,
-                "max_x": 36.0,
-                "max_y": 0.0
-              },
-              "title": "Bounding Box",
-              "description": "Filter events to inside these bounding coordinates.",
-              "ecoscope:advanced": true
-            },
-            "filter_point_coords": {
-              "default": [
-                {
-                  "x": 180.0,
-                  "y": 90.0
-                },
-                {
-                  "x": 0.0,
-                  "y": 0.0
-                },
-                {
-                  "x": 1.0,
-                  "y": 1.0
-                }
-              ],
-              "items": {
-                "$ref": "#/$defs/Coordinate"
-              },
-              "title": "Filter Exact Point Coordinates",
-              "type": "array",
-              "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
-              "ecoscope:advanced": true
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Filter Coordinates"
-        },
         "featured_list": {
           "additionalProperties": false,
           "properties": {
@@ -145,7 +98,8 @@
             "vars"
           ],
           "type": "object",
-          "title": "Set Featured Species List"
+          "title": "Featured Species",
+          "description": "Each featured species generates its own map. All remaining species are combined into one map."
         }
       }
     },
@@ -434,56 +388,6 @@
       ],
       "title": "SMARTConnection",
       "type": "object"
-    },
-    "BoundingBox": {
-      "properties": {
-        "min_y": {
-          "default": -90.0,
-          "ecoscope:advanced": true,
-          "title": "Min Latitude",
-          "type": "number"
-        },
-        "max_y": {
-          "default": 90.0,
-          "ecoscope:advanced": true,
-          "title": "Max Latitude",
-          "type": "number"
-        },
-        "min_x": {
-          "default": -180.0,
-          "ecoscope:advanced": true,
-          "title": "Min Longitude",
-          "type": "number"
-        },
-        "max_x": {
-          "default": 180.0,
-          "ecoscope:advanced": true,
-          "title": "Max Longitude",
-          "type": "number"
-        }
-      },
-      "title": "BoundingBox",
-      "type": "object"
-    },
-    "Coordinate": {
-      "properties": {
-        "y": {
-          "description": "Example -0.15293",
-          "title": "Latitude",
-          "type": "number"
-        },
-        "x": {
-          "description": "Example 37.30906",
-          "title": "Longitude",
-          "type": "number"
-        }
-      },
-      "required": [
-        "y",
-        "x"
-      ],
-      "title": "Coordinate",
-      "type": "object"
     }
   },
   "uiSchema": {
@@ -499,25 +403,6 @@
         "until",
         "timezone"
       ]
-    },
-    "Process Sightings": {
-      "ui:order": [
-        "filter_coords",
-        "featured_list"
-      ],
-      "filter_coords": {
-        "ui:order": [
-          "bounding_box",
-          "filter_point_coords"
-        ],
-        "filter_point_coords": {
-          "items": {
-            "ui:options": {
-              "label": false
-            }
-          }
-        }
-      }
     },
     "ui:order": [
       "workflow_details",

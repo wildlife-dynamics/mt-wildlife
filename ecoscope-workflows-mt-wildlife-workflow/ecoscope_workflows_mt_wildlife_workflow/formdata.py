@@ -24,6 +24,14 @@ class FeaturedList(BaseModel):
     vars: list[str] = Field(..., title="Species")
 
 
+class ProcessSightings(BaseModel):
+    featured_list: FeaturedList | None = Field(
+        None,
+        description="Each featured species generates its own map. All remaining species are combined into one map.",
+        title="Featured Species",
+    )
+
+
 class Url(str, Enum):
     https___tile_openstreetmap_org__z___x___y__png = (
         "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -222,18 +230,6 @@ class SMARTConnection(BaseModel):
     name: str = Field(..., title="Data Source")
 
 
-class BoundingBox(BaseModel):
-    min_y: float | None = Field(-90.0, title="Min Latitude")
-    max_y: float | None = Field(90.0, title="Max Latitude")
-    min_x: float | None = Field(-180.0, title="Min Longitude")
-    max_x: float | None = Field(180.0, title="Max Longitude")
-
-
-class Coordinate(BaseModel):
-    y: float = Field(..., description="Example -0.15293", title="Latitude")
-    x: float = Field(..., description="Example 37.30906", title="Longitude")
-
-
 class TimeRange(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -250,36 +246,6 @@ class SmartClientName(BaseModel):
     data_source: SMARTConnection = Field(
         ..., description="Select one of your configured data sources.", title=""
     )
-
-
-class FilterCoords(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    bounding_box: BoundingBox | None = Field(
-        default_factory=lambda: BoundingBox.model_validate(
-            {"min_x": 33.0, "min_y": -3.0, "max_x": 36.0, "max_y": 0.0}
-        ),
-        description="Filter events to inside these bounding coordinates.",
-        title="Bounding Box",
-    )
-    filter_point_coords: list[Coordinate] | None = Field(
-        default_factory=lambda: [
-            Coordinate.model_validate(v)
-            for v in [
-                {"x": 180.0, "y": 90.0},
-                {"x": 0.0, "y": 0.0},
-                {"x": 1.0, "y": 1.0},
-            ]
-        ],
-        description="By adding a filter, the workflow will not include events recorded at the specified coordinates.",
-        title="Filter Exact Point Coordinates",
-    )
-
-
-class ProcessSightings(BaseModel):
-    filter_coords: FilterCoords | None = Field(None, title="Filter Coordinates")
-    featured_list: FeaturedList | None = Field(None, title="Set Featured Species List")
 
 
 class FormData(BaseModel):
