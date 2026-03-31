@@ -205,7 +205,11 @@ def main(params: Params):
             unpack_depth=1,
         )
         .partial(
-            df=convert_tz, roi_gdf=None, **(params_dict.get("filter_coords") or {})
+            df=convert_tz,
+            roi_gdf=None,
+            roi_name=None,
+            reset_index=False,
+            **(params_dict.get("filter_coords") or {}),
         )
         .call()
     )

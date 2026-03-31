@@ -101,6 +101,8 @@ workflow:
         partial:
           df: ${{ workflow.convert_tz.return }}
           roi_gdf: null
+          roi_name: null
+          reset_index: false
 
       - name: Normalize Extracted Attributes
         id: normalize_attrs

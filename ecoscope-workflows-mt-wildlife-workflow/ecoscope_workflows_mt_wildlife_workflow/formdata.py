@@ -275,10 +275,6 @@ class FilterCoords(BaseModel):
         description="By adding a filter, the workflow will not include events recorded at the specified coordinates.",
         title="Filter Exact Point Coordinates",
     )
-    roi_name: str | None = Field(None, description="The ROI name", title="Roi Name")
-    reset_index: bool | None = Field(
-        True, description="Reset index after filtering", title="Reset Index"
-    )
 
 
 class ProcessSightings(BaseModel):

@@ -268,8 +268,6 @@ convert_tz = (
 filter_coords_params = dict(
     bounding_box=...,
     filter_point_coords=...,
-    roi_name=...,
-    reset_index=...,
 )
 
 # %%
@@ -287,7 +285,13 @@ filter_coords = (
         ],
         unpack_depth=1,
     )
-    .partial(df=convert_tz, roi_gdf=None, **filter_coords_params)
+    .partial(
+        df=convert_tz,
+        roi_gdf=None,
+        roi_name=None,
+        reset_index=False,
+        **filter_coords_params,
+    )
     .call()
 )
 

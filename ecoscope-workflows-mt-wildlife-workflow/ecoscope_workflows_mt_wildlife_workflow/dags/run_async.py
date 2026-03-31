@@ -241,6 +241,8 @@ def main(params: Params):
             partial={
                 "df": DependsOn("convert_tz"),
                 "roi_gdf": None,
+                "roi_name": None,
+                "reset_index": False,
             }
             | (params_dict.get("filter_coords") or {}),
             method="call",
