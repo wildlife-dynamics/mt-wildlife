@@ -1,0 +1,381 @@
+id: mt_wildlife
+
+requirements:
+  - name: ecoscope-workflows-core
+    version: ">=0.22.17, <0.23.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows/
+  - name: ecoscope-workflows-ext-ecoscope
+    version: ">=0.22.17, <0.23.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows/
+  - name: ecoscope-workflows-ext-custom
+    version: ">=0.0.40, <0.1.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+
+rjsf-overrides:
+  properties:
+    Process Sightings.properties.filter_coords.properties.bounding_box.default:
+      min_x: 33.0
+      min_y: -3.0
+      max_x: 36.0
+      max_y: 0.0
+    Process Sightings.properties.filter_coords.properties.filter_point_coords.default:
+      - {x: 180.0, y: 90.0}
+      - {x: 0.0, y: 0.0}
+      - {x: 1.0, y: 1.0}
+    Process Sightings.properties.featured_list.properties.vars.title: "Species"
+    Process Sightings.properties.featured_list.properties.vars.default:
+      - "African Buffalo"
+      - "African Elephant"
+      - "Lion"
+      - "Leopard"
+      - "Cheetah"
+      - "Giraffe"
+      - "Zebra"
+      - "Wildebeest"
+    base_map_defs.properties.base_maps.default:
+      - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+        opacity: 1
+    persist_sightings.properties.filetypes.default: ["parquet"]
+    persist_sightings.properties.filetypes.items.enum: ["csv", "parquet"]
+    wildlife_report.properties.template_path.default: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
+
+  uiSchema:
+    Process Sightings.filter_coords.filter_point_coords.items.ui:options.label: false
+
+task-instance-defaults:
+  skipif:
+    conditions:
+      - any_is_empty_df
+      - any_dependency_skipped
+
+workflow:
+  # Setup
+  - name: Workflow Details
+    id: workflow_details
+    task: set_workflow_details
+
+  - name: Time Range
+    id: time_range
+    task: set_time_range
+    partial:
+      time_format: '%d %b %Y %H:%M:%S %Z'
+
+  - name: Extract Timezone
+    id: get_timezone
+    task: get_timezone_from_time_range
+    partial:
+      time_range: ${{ workflow.time_range.return }}
+
+  # Phase 2: Load from local file
+  - name: Load Events
+    id: smart_events
+    task: ecoscope_workflows_ext_custom.tasks.io.load_df
+    partial:
+      deserialize_json: false
+
+  # Phase 3: Uncomment below, remove load_df above, and add set_smart_connection
+  # - name: Data Source
+  #   id: smart_client_name
+  #   task: set_smart_connection
+  #
+  # - name: Get SMART Events
+  #   id: smart_events
+  #   task: ecoscope_workflows_ext_ecoscope.tasks.io.smart_events_from_smart
+  #   partial:
+  #     client: ${{ workflow.smart_client_name.return }}
+  #     time_range: ${{ workflow.time_range.return }}
+  #     ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
+  #     language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
+
+  # Processing
+  - title: Process Sightings
+    type: task-group
+    description: "Process SMART events into wildlife sighting records."
+    tasks:
+      - name: Convert to Timezone
+        id: convert_tz
+        task: convert_values_to_timezone
+        partial:
+          df: ${{ workflow.smart_events.return }}
+          timezone: ${{ workflow.get_timezone.return }}
+          columns: ["time"]
+
+      - name: Filter Coordinates
+        id: filter_coords
+        task: apply_reloc_coord_filter
+        partial:
+          df: ${{ workflow.convert_tz.return }}
+
+      - name: Process Sighting Columns
+        id: process_sightings
+        task: apply_sql_query
+        partial:
+          df: ${{ workflow.filter_coords.return }}
+          columns: null
+          query: >-
+            SELECT uuid, X, Y, time, geometry,
+              json_extract(extracted_attributes, '$.Species') AS "Species",
+              (COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Wildlife observed"') AS REAL), 0)
+              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Age or Sex Unknown"') AS REAL), 0)
+              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Females"') AS REAL), 0)
+              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Adult Males"') AS REAL), 0)
+              + COALESCE(CAST(json_extract(extracted_attributes, '$."Number of Young"') AS REAL), 0))
+              AS "Count"
+            FROM df
+            WHERE event_type = 'Wildlife - direct observation'
+              AND json_extract(extracted_attributes, '$.Species') IS NOT NULL
+
+      - name: Apply Colormap
+        id: sightings_colormap
+        task: apply_color_map
+        partial:
+          df: ${{ workflow.process_sightings.return }}
+          input_column_name: "Species"
+          output_column_name: "species_colormap"
+          colormap: "Dark2"
+
+      - name: Set Featured Species List
+        id: featured_list
+        task: ecoscope_workflows_core.tasks.config.set_list_of_string_vars
+
+      - name: Filter Featured Species
+        id: featured_species
+        task: filter_row_values
+        partial:
+          df: ${{ workflow.sightings_colormap.return }}
+          column: "Species"
+          values: ${{ workflow.featured_list.return }}
+
+      - name: Filter Other Species
+        id: other_species
+        task: exclude_row_values
+        partial:
+          df: ${{ workflow.sightings_colormap.return }}
+          column: "Species"
+          values: ${{ workflow.featured_list.return }}
+
+  # Summary
+  - name: Summarize Wildlife Sightings
+    id: wildlife_summary
+    task: summarize_df
+    partial:
+      df: ${{ workflow.process_sightings.return }}
+      groupby_cols: ["Species"]
+      reset_index: false
+      summary_params:
+        - display_name: "Sightings Count"
+          aggregator: count
+          column: Count
+        - display_name: "Individuals Count"
+          aggregator: sum
+          column: Count
+
+  - name: Persist Summary
+    id: persist_summary
+    task: persist_df_wrapper
+    partial:
+      df: ${{ workflow.wildlife_summary.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_prefix: "wildlife_summary"
+      filetypes: ["csv"]
+      sanitize: false
+    skipif:
+      conditions:
+        - never
+
+  # Map Settings
+  - name: Base Maps
+    id: base_map_defs
+    task: set_base_maps
+
+  # Featured Species Maps
+  - title: Featured Species Maps
+    type: task-group
+    description: "Generate one map per featured species."
+    tasks:
+      - name: Species Groupers
+        id: species_groupers
+        task: set_groupers
+        partial:
+          groupers:
+            - index_name: "Species"
+
+      - name: Split by Species
+        id: split_species
+        task: split_groups
+        partial:
+          df: ${{ workflow.featured_species.return }}
+          groupers: ${{ workflow.species_groupers.return }}
+
+      - name: Featured Map Title
+        id: set_featured_title
+        task: set_string_var
+        partial:
+          var: "Wildlife Sightings"
+
+      - name: Create Featured Point Layers
+        id: featured_point_layers
+        task: create_point_layer
+        skipif:
+          conditions:
+            - any_is_empty_df
+            - any_dependency_skipped
+            - all_geometry_are_none
+        partial:
+          layer_style:
+            get_radius: 5.0
+            fill_color_column: "species_colormap"
+          legend:
+            label_column: "Species"
+            color_column: "species_colormap"
+          tooltip_columns: null
+        mapvalues:
+          argnames: geodataframe
+          argvalues: ${{ workflow.split_species.return }}
+
+      - name: Draw Featured Ecomaps
+        id: featured_ecomap
+        task: draw_ecomap
+        partial:
+          tile_layers: ${{ workflow.base_map_defs.return }}
+          north_arrow_style:
+            placement: "top-left"
+          legend_style:
+            title: "Species"
+            format_title: true
+            placement: "bottom-right"
+          static: false
+          title: null
+          max_zoom: 13
+        mapvalues:
+          argnames: geo_layers
+          argvalues: ${{ workflow.featured_point_layers.return }}
+
+      - name: Persist Featured Ecomaps
+        id: featured_ecomap_html
+        task: persist_text
+        partial:
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: "species_map"
+        mapvalues:
+          argnames: text
+          argvalues: ${{ workflow.featured_ecomap.return }}
+
+  # Other Species Map
+  - title: Other Species Map
+    type: task-group
+    description: "Generate one combined map for all non-featured species."
+    tasks:
+      - name: Create Other Point Layer
+        id: other_point_layer
+        task: create_point_layer
+        skipif:
+          conditions:
+            - any_is_empty_df
+            - any_dependency_skipped
+            - all_geometry_are_none
+        partial:
+          geodataframe: ${{ workflow.other_species.return }}
+          layer_style:
+            get_radius: 5.0
+            fill_color_column: "species_colormap"
+          legend:
+            label_column: "Species"
+            color_column: "species_colormap"
+          tooltip_columns: null
+
+      - name: Other Map Title
+        id: set_other_title
+        task: set_string_var
+        partial:
+          var: "Wildlife Sightings - Other Species"
+
+      - name: Draw Other Ecomap
+        id: other_ecomap
+        task: draw_ecomap
+        partial:
+          geo_layers: ${{ workflow.other_point_layer.return }}
+          tile_layers: ${{ workflow.base_map_defs.return }}
+          north_arrow_style:
+            placement: "top-left"
+          legend_style:
+            title: "Species"
+            format_title: true
+            placement: "bottom-right"
+          static: false
+          title: null
+          max_zoom: 13
+
+      - name: Persist Other Ecomap
+        id: other_ecomap_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.other_ecomap.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: "other_species_map"
+
+  # Data Export
+  - name: Persist Sightings Data
+    id: persist_sightings
+    task: persist_df_wrapper
+    partial:
+      df: ${{ workflow.process_sightings.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_prefix: "wildlife_sightings"
+      sanitize: true
+    skipif:
+      conditions:
+        - never
+
+  # Report
+  - name: Report Groupers
+    id: report_groupers
+    task: set_groupers
+    partial:
+      groupers:
+        - index_name: "Species"
+
+  - name: Create Wildlife Report
+    id: wildlife_report
+    task: ecoscope_workflows_ext_custom.tasks.results.create_docx
+    partial:
+      context:
+        items:
+          - item_type: timerange
+            key: report_date
+            value: ${{ workflow.time_range.return }}
+            format: "%b %Y"
+          - item_type: table
+            key: summary
+            value: ${{ workflow.wildlife_summary.return }}
+          - item_type: image
+            key: species_maps
+            value: ${{ workflow.featured_ecomap_html.return }}
+            include_column_name_in_title: false
+            screenshot_config:
+              wait_for_timeout: 1000
+              max_concurrent_pages: 2
+              device_scale_factor: 1.0
+          - item_type: image
+            key: other_map
+            value: ${{ workflow.other_ecomap_html.return }}
+            screenshot_config:
+              wait_for_timeout: 1000
+              max_concurrent_pages: 2
+      groupers: ${{ workflow.report_groupers.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_prefix: mt_wildlife_report
+    skipif:
+      conditions:
+        - never
+
+  # Dashboard (empty — report-driven)
+  - name: Create Dashboard
+    id: dashboard
+    task: gather_dashboard
+    partial:
+      details: ${{ workflow.workflow_details.return }}
+      widgets: []
+      groupers:
+        - index_name: "Species"
+      time_range: ${{ workflow.time_range.return }}

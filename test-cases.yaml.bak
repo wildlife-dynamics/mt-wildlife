@@ -1,0 +1,36 @@
+base:
+  name: Integration Test
+  mock_io: false
+  params:
+    workflow_details:
+      name: "Mara Triangle Wildlife Sightings"
+      description: "Wildlife sighting analysis for Mara Triangle conservancy."
+    time_range:
+      since: "2026-01-01T00:00:00Z"
+      until: "2026-01-31T23:59:59Z"
+      time_zone: "Africa/Nairobi"
+    get_events:
+      file_path: "resources/mock-data/mara_triangle_raw_events.parquet"
+    featured_list:
+      vars:
+        - "African Buffalo"
+        - "African Elephant"
+        - "Lion"
+        - "Leopard"
+        - "Cheetah"
+        - "Giraffe"
+        - "Zebra"
+        - "Wildebeest"
+    wildlife_summary:
+      reset_index: true
+    species_groupers:
+      groupers:
+        - index_name: "Species"
+    base_map_defs:
+      base_maps:
+        - url: "https://tiles.arcgis.com/tiles/POUcpLYXNckpLjnY/arcgis/rest/services/landDx_basemap_tiles_mapservice/MapServer/tile/{z}/{y}/{x}"
+          opacity: 0.5
+    persist_sightings:
+      filetypes: ["parquet"]
+    wildlife_report:
+      template_path: "resources/templates/mt_wildlife_report_template.docx"
