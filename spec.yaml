@@ -1,18 +1,15 @@
 id: mt_wildlife
 
 requirements:
-  - name: ecoscope-workflows-core
-    version: ">=0.22.18, <0.23.0"
-    channel: https://repo.prefix.dev/ecoscope-workflows/
-  - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.22.18, <0.23.0"
+  - name: ecoscope-platform
+    version: ">=2.18.0, <2.19.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.41, <0.1.0"
+    version: "0.1.0rc24"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   - name: pydeck
-    version: "0.0.2"
-    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+    version: "0.9.2"
+    channel: conda-forge
 
 rjsf-overrides:
   properties:
@@ -145,7 +142,7 @@ workflow:
 
       - name: Set Featured Species List
         id: featured_list
-        task: ecoscope_workflows_core.tasks.config.set_list_of_string_vars
+        task: set_list_of_string_vars
 
       - name: Filter Featured Species
         id: featured_species
