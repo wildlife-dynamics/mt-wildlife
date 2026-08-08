@@ -799,7 +799,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             groupers=report_groupers,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_prefix="mt_wildlife_report",
-            template_path="https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx",
             skip=False,
             **(params.get("wildlife_report") or {}),
         )

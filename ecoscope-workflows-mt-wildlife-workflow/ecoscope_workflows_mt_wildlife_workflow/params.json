@@ -303,6 +303,21 @@
       "required": [],
       "type": "object",
       "title": "Persist Sightings Data"
+    },
+    "wildlife_report": {
+      "additionalProperties": false,
+      "properties": {
+        "template_path": {
+          "title": "Template Path",
+          "type": "string",
+          "description": "Path or URL to the Word template (.docx) file with Jinja2 placeholders. Supports local paths and remote URLs (http://, https://)."
+        }
+      },
+      "required": [
+        "template_path"
+      ],
+      "type": "object",
+      "title": "Create Wildlife Report"
     }
   },
   "$defs": {
@@ -368,7 +383,8 @@
       "er_client_name",
       "featured_list",
       "base_map_defs",
-      "persist_sightings"
+      "persist_sightings",
+      "wildlife_report"
     ]
   },
   "additionalProperties": false

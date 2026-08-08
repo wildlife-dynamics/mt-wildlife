@@ -30,6 +30,7 @@ rjsf-overrides:
         opacity: 1
     persist_sightings.properties.filetypes.default: ["parquet"]
     persist_sightings.properties.filetypes.items.enum: ["csv", "parquet"]
+    wildlife_report.properties.template_path.default: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
 
 task-instance-defaults:
   skipif:
@@ -387,7 +388,6 @@ workflow:
       groupers: ${{ workflow.report_groupers.return }}
       output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_prefix: mt_wildlife_report
-      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
       skip: false
     skipif:
       conditions:

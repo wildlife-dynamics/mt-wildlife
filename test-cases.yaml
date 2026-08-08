@@ -38,6 +38,8 @@ mock:
           opacity: 1
     persist_sightings:
       filetypes: ["parquet"]
+    wildlife_report:
+      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
 
 base:
   name: Integration Test
@@ -73,3 +75,5 @@ base:
           opacity: 1
     persist_sightings:
       filetypes: ["parquet"]
+    wildlife_report:
+      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
