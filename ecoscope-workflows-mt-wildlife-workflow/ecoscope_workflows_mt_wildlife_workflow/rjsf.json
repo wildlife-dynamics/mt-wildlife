@@ -1,383 +1,383 @@
-{
-  "properties": {
-    "workflow_details": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "title": "Workflow Name",
-          "type": "string"
-        },
-        "description": {
-          "default": "",
-          "title": "Workflow Description",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object",
-      "description": "Add information that will help to differentiate this workflow from another.",
-      "title": "Workflow Details"
-    },
-    "time_range": {
-      "additionalProperties": false,
-      "properties": {
-        "since": {
-          "format": "date-time",
-          "title": "Since",
-          "type": "string",
-          "description": "The start time"
-        },
-        "until": {
-          "format": "date-time",
-          "title": "Until",
-          "type": "string",
-          "description": "The end time"
-        },
-        "timezone": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/TimezoneInfo"
-            }
-          ],
-          "default": null,
-          "title": "Timezone"
-        }
-      },
-      "required": [
-        "since",
-        "until"
-      ],
-      "type": "object",
-      "description": "Choose the period of time to analyze.",
-      "title": "Time Range"
-    },
-    "er_client_name": {
-      "additionalProperties": false,
-      "properties": {
-        "data_source": {
-          "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
-        }
-      },
-      "required": [
-        "data_source"
-      ],
-      "type": "object",
-      "title": "Data Source"
-    },
-    "Process Sightings": {
-      "type": "object",
-      "description": "Process EarthRanger events into wildlife sighting records.",
-      "ecoscope:task_group": true,
-      "properties": {
-        "featured_list": {
-          "additionalProperties": false,
-          "properties": {
-            "vars": {
-              "items": {
-                "type": "string"
-              },
-              "title": "Species",
-              "type": "array",
-              "default": [
-                "Buffalo",
-                "Elephant",
-                "Lion",
-                "Leopard",
-                "Cheetah (inform Monitoring Team)",
-                "Giraffe - Maasai",
-                "Zebra",
-                "Wildebeest"
-              ]
-            }
-          },
-          "required": [
-            "vars"
-          ],
-          "type": "object",
-          "title": "Featured Species",
-          "description": "Each featured species generates its own map. All remaining species are combined into one map."
-        }
-      }
-    },
-    "base_map_defs": {
-      "additionalProperties": false,
-      "properties": {
-        "base_maps": {
-          "default": [
-            {
-              "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-              "opacity": 1
-            }
-          ],
-          "items": {
-            "title": "Base Layer",
-            "anyOf": [
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "title": "Preset Layer URL",
-                    "type": "string",
-                    "const": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "enum": [
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    ]
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Layer Opacity",
-                    "type": "number"
-                  }
-                },
-                "title": "Open Street Map",
-                "type": "object"
-              },
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-                    "title": "Preset Layer URL",
-                    "type": "string",
-                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-                    "enum": [
-                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
-                    ]
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Layer Opacity",
-                    "type": "number"
-                  }
-                },
-                "title": "Roadmap",
-                "type": "object"
-              },
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-                    "title": "Preset Layer URL",
-                    "type": "string",
-                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-                    "enum": [
-                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    ]
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Layer Opacity",
-                    "type": "number"
-                  }
-                },
-                "title": "Satellite",
-                "type": "object"
-              },
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-                    "title": "Preset Layer URL",
-                    "type": "string",
-                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-                    "enum": [
-                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-                    ]
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Layer Opacity",
-                    "type": "number"
-                  }
-                },
-                "title": "Terrain",
-                "type": "object"
-              },
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-                    "title": "Preset Layer URL",
-                    "type": "string",
-                    "const": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-                    "enum": [
-                      "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
-                    ]
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Layer Opacity",
-                    "type": "number"
-                  }
-                },
-                "title": "USGS Hillshade",
-                "type": "object"
-              },
-              {
-                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
-                "properties": {
-                  "url": {
-                    "default": "https://example.tiles.com/{z}/{x}/{y}.png",
-                    "description": "The URL of a publicly accessible tiled raster service.",
-                    "pattern": "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9()@:%_\\+.~#?&//=\\{\\}]*)",
-                    "title": "Custom Layer URL",
-                    "type": "string"
-                  },
-                  "opacity": {
-                    "default": 1,
-                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
-                    "ecoscope:advanced": true,
-                    "maximum": 1.0,
-                    "minimum": 0.0,
-                    "title": "Custom Layer Opacity",
-                    "type": "number"
-                  },
-                  "max_zoom": {
-                    "default": 20,
-                    "description": "Set the maximum zoom level to fetch tiles for.",
-                    "title": "Custom Layer Max Zoom",
-                    "type": "integer"
-                  },
-                  "min_zoom": {
-                    "default": 0,
-                    "description": "Set the minimum zoom level to fetch tiles for.",
-                    "title": "Custom Layer Min Zoom",
-                    "type": "integer"
-                  }
-                },
-                "title": "Custom Layer (Advanced)",
-                "type": "object"
-              }
-            ]
-          },
-          "title": " ",
-          "type": "array",
-          "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
-          "ecoscope:advanced": true
-        }
-      },
-      "type": "object",
-      "required": [],
-      "title": "Base Maps"
-    },
-    "persist_sightings": {
-      "additionalProperties": false,
-      "properties": {
-        "filetypes": {
-          "default": [
-            "parquet"
-          ],
-          "items": {
-            "enum": [
-              "csv",
-              "parquet"
-            ],
+  {
+    "properties": {
+      "workflow_details": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Workflow Name",
             "type": "string"
           },
-          "title": "Filetypes",
-          "type": "array",
-          "description": "The output format",
-          "uniqueItems": true
+          "description": {
+            "default": "",
+            "title": "Workflow Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "description": "Add information that will help to differentiate this workflow from another.",
+        "title": "Workflow Details"
+      },
+      "time_range": {
+        "additionalProperties": false,
+        "properties": {
+          "since": {
+            "format": "date-time",
+            "title": "Since",
+            "type": "string",
+            "description": "The start time"
+          },
+          "until": {
+            "format": "date-time",
+            "title": "Until",
+            "type": "string",
+            "description": "The end time"
+          },
+          "timezone": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TimezoneInfo"
+              }
+            ],
+            "default": null,
+            "title": "Timezone"
+          }
+        },
+        "required": [
+          "since",
+          "until"
+        ],
+        "type": "object",
+        "description": "Choose the period of time to analyze.",
+        "title": "Time Range"
+      },
+      "er_client_name": {
+        "additionalProperties": false,
+        "properties": {
+          "data_source": {
+            "$ref": "#/$defs/EarthRangerConnection",
+            "title": "",
+            "description": "Select one of your configured data sources."
+          }
+        },
+        "required": [
+          "data_source"
+        ],
+        "type": "object",
+        "title": "Data Source"
+      },
+      "Process Sightings": {
+        "type": "object",
+        "description": "Process EarthRanger events into wildlife sighting records.",
+        "ecoscope:task_group": true,
+        "properties": {
+          "featured_list": {
+            "additionalProperties": false,
+            "properties": {
+              "vars": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Species",
+                "type": "array",
+                "default": [
+                  "Buffalo",
+                  "Elephant",
+                  "Lion",
+                  "Leopard",
+                  "Cheetah (inform Monitoring Team)",
+                  "Giraffe - Maasai",
+                  "Zebra",
+                  "Wildebeest"
+                ]
+              }
+            },
+            "required": [
+              "vars"
+            ],
+            "type": "object",
+            "title": "Featured Species",
+            "description": "Each featured species generates its own map. All remaining species are combined into one map."
+          }
         }
       },
-      "required": [],
-      "type": "object",
-      "title": "Persist Sightings Data"
-    }
-  },
-  "$defs": {
-    "TimezoneInfo": {
-      "properties": {
-        "label": {
-          "title": "Label",
-          "type": "string"
+      "base_map_defs": {
+        "additionalProperties": false,
+        "properties": {
+          "base_maps": {
+            "default": [
+              {
+                "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                "opacity": 1
+              }
+            ],
+            "items": {
+              "title": "Base Layer",
+              "anyOf": [
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      "title": "Preset Layer URL",
+                      "type": "string",
+                      "const": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      "enum": [
+                        "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      ]
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Layer Opacity",
+                      "type": "number"
+                    }
+                  },
+                  "title": "Open Street Map",
+                  "type": "object"
+                },
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                      "title": "Preset Layer URL",
+                      "type": "string",
+                      "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                      "enum": [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                      ]
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Layer Opacity",
+                      "type": "number"
+                    }
+                  },
+                  "title": "Roadmap",
+                  "type": "object"
+                },
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                      "title": "Preset Layer URL",
+                      "type": "string",
+                      "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                      "enum": [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                      ]
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Layer Opacity",
+                      "type": "number"
+                    }
+                  },
+                  "title": "Satellite",
+                  "type": "object"
+                },
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                      "title": "Preset Layer URL",
+                      "type": "string",
+                      "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                      "enum": [
+                        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                      ]
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Layer Opacity",
+                      "type": "number"
+                    }
+                  },
+                  "title": "Terrain",
+                  "type": "object"
+                },
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                      "title": "Preset Layer URL",
+                      "type": "string",
+                      "const": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                      "enum": [
+                        "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
+                      ]
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Layer Opacity",
+                      "type": "number"
+                    }
+                  },
+                  "title": "USGS Hillshade",
+                  "type": "object"
+                },
+                {
+                  "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                  "properties": {
+                    "url": {
+                      "default": "https://example.tiles.com/{z}/{x}/{y}.png",
+                      "description": "The URL of a publicly accessible tiled raster service.",
+                      "pattern": "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9()@:%_\\+.~#?&//=\\{\\}]*)",
+                      "title": "Custom Layer URL",
+                      "type": "string"
+                    },
+                    "opacity": {
+                      "default": 1,
+                      "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                      "ecoscope:advanced": true,
+                      "maximum": 1.0,
+                      "minimum": 0.0,
+                      "title": "Custom Layer Opacity",
+                      "type": "number"
+                    },
+                    "max_zoom": {
+                      "default": 20,
+                      "description": "Set the maximum zoom level to fetch tiles for.",
+                      "title": "Custom Layer Max Zoom",
+                      "type": "integer"
+                    },
+                    "min_zoom": {
+                      "default": 0,
+                      "description": "Set the minimum zoom level to fetch tiles for.",
+                      "title": "Custom Layer Min Zoom",
+                      "type": "integer"
+                    }
+                  },
+                  "title": "Custom Layer (Advanced)",
+                  "type": "object"
+                }
+              ]
+            },
+            "title": " ",
+            "type": "array",
+            "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
+            "ecoscope:advanced": true
+          }
         },
-        "tzCode": {
-          "title": "Tzcode",
-          "type": "string"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "utc": {
-          "title": "Utc",
-          "type": "string"
-        }
+        "type": "object",
+        "required": [],
+        "title": "Base Maps"
       },
-      "required": [
-        "label",
-        "tzCode",
-        "name",
-        "utc"
-      ],
-      "title": "TimezoneInfo",
-      "type": "object"
+      "persist_sightings": {
+        "additionalProperties": false,
+        "properties": {
+          "filetypes": {
+            "default": [
+              "parquet"
+            ],
+            "items": {
+              "enum": [
+                "csv",
+                "parquet"
+              ],
+              "type": "string"
+            },
+            "title": "Filetypes",
+            "type": "array",
+            "description": "The output format",
+            "uniqueItems": true
+          }
+        },
+        "required": [],
+        "type": "object",
+        "title": "Persist Sightings Data"
+      }
     },
-    "EarthRangerConnection": {
-      "properties": {
-        "name": {
-          "title": "Data Source",
-          "type": "string"
-        }
+    "$defs": {
+      "TimezoneInfo": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "tzCode": {
+            "title": "Tzcode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "utc": {
+            "title": "Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "tzCode",
+          "name",
+          "utc"
+        ],
+        "title": "TimezoneInfo",
+        "type": "object"
       },
-      "required": [
-        "name"
-      ],
-      "title": "EarthRangerConnection",
-      "type": "object"
-    }
-  },
-  "uiSchema": {
-    "workflow_details": {
+      "EarthRangerConnection": {
+        "properties": {
+          "name": {
+            "title": "Data Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "EarthRangerConnection",
+        "type": "object"
+      }
+    },
+    "uiSchema": {
+      "workflow_details": {
+        "ui:order": [
+          "name",
+          "description"
+        ]
+      },
+      "time_range": {
+        "ui:order": [
+          "since",
+          "until",
+          "timezone"
+        ]
+      },
       "ui:order": [
-        "name",
-        "description"
+        "workflow_details",
+        "time_range",
+        "er_client_name",
+        "Process Sightings",
+        "base_map_defs",
+        "persist_sightings"
       ]
     },
-    "time_range": {
-      "ui:order": [
-        "since",
-        "until",
-        "timezone"
-      ]
-    },
-    "ui:order": [
-      "workflow_details",
-      "time_range",
-      "er_client_name",
-      "Process Sightings",
-      "base_map_defs",
-      "persist_sightings"
-    ]
-  },
-  "additionalProperties": false
-}
+    "additionalProperties": false
+  }

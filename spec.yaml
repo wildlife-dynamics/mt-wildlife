@@ -388,7 +388,7 @@ workflow:
       output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_prefix: mt_wildlife_report
       template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
-      skip: true
+      skip: false
     skipif:
       conditions:
         - never
