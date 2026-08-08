@@ -14,10 +14,11 @@ from ecoscope.platform.tasks.filter import (
 from ecoscope.platform.tasks.filter import set_time_range as set_time_range
 from ecoscope.platform.tasks.groupby import set_groupers as set_groupers
 from ecoscope.platform.tasks.groupby import split_groups as split_groups
-from ecoscope.platform.tasks.io import get_events_from_smart as get_events_from_smart
+from ecoscope.platform.tasks.io import get_events as get_events
 from ecoscope.platform.tasks.io import persist_df_wrapper as persist_df_wrapper
 from ecoscope.platform.tasks.io import persist_text as persist_text
-from ecoscope.platform.tasks.io import set_smart_connection as set_smart_connection
+from ecoscope.platform.tasks.io import process_events_details as process_events_details
+from ecoscope.platform.tasks.io import set_er_connection as set_er_connection
 from ecoscope.platform.tasks.results import create_point_layer as create_point_layer
 from ecoscope.platform.tasks.results import draw_ecomap as draw_ecomap
 from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
@@ -35,6 +36,9 @@ from ecoscope.platform.tasks.transformation import (
 from ecoscope.platform.tasks.transformation import apply_sql_query as apply_sql_query
 from ecoscope.platform.tasks.transformation import (
     convert_values_to_timezone as convert_values_to_timezone,
+)
+from ecoscope.platform.tasks.transformation import (
+    drop_column_prefix as drop_column_prefix,
 )
 from ecoscope.platform.tasks.transformation import (
     normalize_json_column as normalize_json_column,
@@ -107,10 +111,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    smart_client_name = (
-        task(set_smart_connection)
+    er_client_name = (
+        task(set_er_connection)
         .validate()
-        .set_task_instance_id("smart_client_name")
+        .set_task_instance_id("er_client_name")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -120,14 +124,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("smart_client_name") or {}))
+        .partial(**(params.get("er_client_name") or {}))
         .call()
     )
 
-    smart_events = (
-        task(get_events_from_smart)
+    er_events = (
+        task(get_events)
         .validate()
-        .set_task_instance_id("smart_events")
+        .set_task_instance_id("er_events")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -138,11 +142,18 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            client=smart_client_name,
+            client=er_client_name,
             time_range=time_range,
-            ca_uuid="735606d2-c34e-49c3-a45b-7496ca834e58",
-            language_uuid="13451893-86af-4ec0-beac-2b8e0c2482b5",
-            **(params.get("smart_events") or {}),
+            event_types=["wildlife_sightings"],
+            event_columns=None,
+            include_null_geometry=False,
+            raise_on_empty=False,
+            include_details=True,
+            include_updates=False,
+            include_related_events=False,
+            include_display_values=True,
+            force_point_geometry=True,
+            **(params.get("er_events") or {}),
         )
         .call()
     )
@@ -161,10 +172,79 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=smart_events,
+            df=er_events,
             timezone=get_timezone,
             columns=["time"],
+            auto_detect=False,
             **(params.get("convert_tz") or {}),
+        )
+        .call()
+    )
+
+    process_event_details = (
+        task(process_events_details)
+        .validate()
+        .set_task_instance_id("process_event_details")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=convert_tz,
+            client=er_client_name,
+            map_to_titles=True,
+            ordered=True,
+            **(params.get("process_event_details") or {}),
+        )
+        .call()
+    )
+
+    normalize_event_details = (
+        task(normalize_json_column)
+        .validate()
+        .set_task_instance_id("normalize_event_details")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=process_event_details,
+            column="event_details",
+            skip_if_not_exists=True,
+            sort_columns=False,
+            **(params.get("normalize_event_details") or {}),
+        )
+        .call()
+    )
+
+    drop_event_details_prefix = (
+        task(drop_column_prefix)
+        .validate()
+        .set_task_instance_id("drop_event_details_prefix")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=normalize_event_details,
+            prefix="event_details__",
+            duplicate_strategy="suffix",
+            **(params.get("drop_event_details_prefix") or {}),
         )
         .call()
     )
@@ -183,7 +263,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=convert_tz,
+            df=drop_event_details_prefix,
             roi_gdf=None,
             roi_name=None,
             reset_index=False,
@@ -203,29 +283,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    normalize_attrs = (
-        task(normalize_json_column)
-        .validate()
-        .set_task_instance_id("normalize_attrs")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=filter_coords,
-            column="extracted_attributes",
-            skip_if_not_exists=True,
-            sort_columns=True,
-            **(params.get("normalize_attrs") or {}),
-        )
-        .call()
-    )
-
     process_sightings = (
         task(apply_sql_query)
         .validate()
@@ -240,18 +297,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=normalize_attrs,
-            columns=[
-                "uuid",
-                "event_type",
-                "X",
-                "Y",
-                "time",
-                "geometry",
-                "extracted_attributes__Species",
-                "extracted_attributes__Number of Wildlife observed",
-            ],
-            query='SELECT uuid, X, Y, time, geometry,\n  "extracted_attributes__Species" AS "Species",\n  COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"\nFROM df WHERE event_type = \'Wildlife - direct observation\'\n  AND "extracted_attributes__Species" IS NOT NULL',
+            df=filter_coords,
+            columns=None,
+            sanitize=True,
+            query='SELECT id, serial_number, time, geometry,\n  "Species",\n  COALESCE(CAST("Count" AS REAL), 0) AS "Count"\nFROM df WHERE "Species" IS NOT NULL',
             **(params.get("process_sightings") or {}),
         )
         .call()
@@ -731,6 +780,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             groupers=report_groupers,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_prefix="mt_wildlife_report",
+            skip=False,
             **(params.get("wildlife_report") or {}),
         )
         .call()

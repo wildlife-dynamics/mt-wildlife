@@ -17,12 +17,12 @@ rjsf-overrides:
     Process Sightings.properties.featured_list.description: "Each featured species generates its own map. All remaining species are combined into one map."
     Process Sightings.properties.featured_list.properties.vars.title: "Species"
     Process Sightings.properties.featured_list.properties.vars.default:
-      - "African Buffalo"
-      - "African Elephant"
+      - "Buffalo"
+      - "Elephant"
       - "Lion"
       - "Leopard"
-      - "Cheetah"
-      - "Giraffe"
+      - "Cheetah (inform Monitoring Team)"
+      - "Giraffe - Maasai"
       - "Zebra"
       - "Wildebeest"
     base_map_defs.properties.base_maps.default:
@@ -57,36 +57,70 @@ workflow:
       time_range: ${{ workflow.time_range.return }}
 
   - name: Data Source
-    id: smart_client_name
-    task: set_smart_connection
+    id: er_client_name
+    task: set_er_connection
 
-  - name: Get SMART Events
-    id: smart_events
-    task: get_events_from_smart
+  - name: Get Wildlife Sighting Events
+    id: er_events
+    task: get_events
     partial:
-      client: ${{ workflow.smart_client_name.return }}
+      client: ${{ workflow.er_client_name.return }}
       time_range: ${{ workflow.time_range.return }}
-      ca_uuid: "735606d2-c34e-49c3-a45b-7496ca834e58"
-      language_uuid: "13451893-86af-4ec0-beac-2b8e0c2482b5"
+      event_types: ["wildlife_sightings"]
+      event_columns: null
+      include_null_geometry: false
+      raise_on_empty: false
+      include_details: true
+      include_updates: false
+      include_related_events: false
+      include_display_values: true
+      force_point_geometry: true
 
   # Processing
   - title: Process Sightings
     type: task-group
-    description: "Process SMART events into wildlife sighting records."
+    description: "Process EarthRanger events into wildlife sighting records."
     tasks:
       - name: Convert to Timezone
         id: convert_tz
         task: convert_values_to_timezone
         partial:
-          df: ${{ workflow.smart_events.return }}
+          df: ${{ workflow.er_events.return }}
           timezone: ${{ workflow.get_timezone.return }}
           columns: ["time"]
+          auto_detect: false
+
+      - name: Process Event Details
+        id: process_event_details
+        task: process_events_details
+        partial:
+          df: ${{ workflow.convert_tz.return }}
+          client: ${{ workflow.er_client_name.return }}
+          map_to_titles: true
+          ordered: true
+
+      - name: Normalize Event Details
+        id: normalize_event_details
+        task: normalize_json_column
+        partial:
+          df: ${{ workflow.process_event_details.return }}
+          column: "event_details"
+          skip_if_not_exists: true
+          sort_columns: false
+
+      - name: Remove Event Details Prefix
+        id: drop_event_details_prefix
+        task: drop_column_prefix
+        partial:
+          df: ${{ workflow.normalize_event_details.return }}
+          prefix: "event_details__"
+          duplicate_strategy: "suffix"
 
       - name: Filter Coordinates
         id: filter_coords
         task: apply_reloc_coord_filter
         partial:
-          df: ${{ workflow.convert_tz.return }}
+          df: ${{ workflow.drop_event_details_prefix.return }}
           roi_gdf: null
           roi_name: null
           reset_index: false
@@ -100,36 +134,19 @@ workflow:
             - {x: 0.0, y: 0.0}
             - {x: 1.0, y: 1.0}
 
-      - name: Normalize Extracted Attributes
-        id: normalize_attrs
-        task: normalize_json_column
-        partial:
-          df: ${{ workflow.filter_coords.return }}
-          column: "extracted_attributes"
-          skip_if_not_exists: true
-          sort_columns: true
-
       - name: Process Sighting Columns
         id: process_sightings
         task: apply_sql_query
         partial:
-          df: ${{ workflow.normalize_attrs.return }}
-          columns:
-            - uuid
-            - event_type
-            - X
-            - Y
-            - time
-            - geometry
-            - "extracted_attributes__Species"
-            - "extracted_attributes__Number of Wildlife observed"
+          df: ${{ workflow.filter_coords.return }}
+          columns: null
+          sanitize: true
           query: >-
-            SELECT uuid, X, Y, time, geometry,
-              "extracted_attributes__Species" AS "Species",
-              COALESCE(CAST("extracted_attributes__Number of Wildlife observed" AS REAL), 0) AS "Count"
+            SELECT id, serial_number, time, geometry,
+              "Species",
+              COALESCE(CAST("Count" AS REAL), 0) AS "Count"
             FROM df
-            WHERE event_type = 'Wildlife - direct observation'
-              AND "extracted_attributes__Species" IS NOT NULL
+            WHERE "Species" IS NOT NULL
 
       - name: Apply Colormap
         id: sightings_colormap
@@ -371,6 +388,7 @@ workflow:
       groupers: ${{ workflow.report_groupers.return }}
       output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_prefix: mt_wildlife_report
+      skip: false
     skipif:
       conditions:
         - never

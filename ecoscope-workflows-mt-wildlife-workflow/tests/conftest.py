@@ -43,7 +43,8 @@ TEST_CASES_YAML = ARTIFACTS.parent / "test-cases.yaml"
 MATCHSPEC_OVERRIDE = "ecoscope-workflows-mt-wildlife-workflow"
 RESULTS_ENV_VAR = "ECOSCOPE_WORKFLOWS_RESULTS"
 IO_TASKS_IMPORTABLE_REFERENCES = [
-    "ecoscope.platform.tasks.io.get_events_from_smart",
+    "ecoscope.platform.tasks.io.get_events",
+    "ecoscope.platform.tasks.io.process_events_details",
 ]
 
 yaml = ruamel.yaml.YAML(typ="safe")

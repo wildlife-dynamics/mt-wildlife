@@ -1,3 +1,46 @@
+mock:
+  name: Mock Test
+  mock_io: true
+  # Both get_events and process_events_details are io-tagged, so the mock-io
+  # system intercepts them. Override both so the synthetic wildlife rows
+  # (dev/fixtures/build_wildlife_fixture.py) survive the chain end-to-end.
+  mock_io_overrides:
+    ecoscope.platform.tasks.io.get_events: dev/fixtures/get-events-wildlife.example-return.parquet
+    ecoscope.platform.tasks.io.process_events_details: dev/fixtures/process-events-details-wildlife.example-return.parquet
+  params:
+    workflow_details:
+      name: "Mara Triangle Wildlife Sightings (Mock)"
+      description: "Synthetic wildlife sighting fixture run."
+    time_range:
+      since: "2026-07-01T00:00:00"
+      until: "2026-07-31T23:59:59"
+      timezone:
+        label: "(GMT+03:00) Nairobi"
+        tzCode: "Africa/Nairobi"
+        name: "East Africa Time"
+        utc: "+03:00"
+    er_client_name:
+      data_source:
+        name: "mmnr"
+    featured_list:
+      vars:
+        - "Buffalo"
+        - "Elephant"
+        - "Lion"
+        - "Leopard"
+        - "Cheetah (inform Monitoring Team)"
+        - "Giraffe - Maasai"
+        - "Zebra"
+        - "Wildebeest"
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1
+    persist_sightings:
+      filetypes: ["parquet"]
+    wildlife_report:
+      template_path: "https://raw.githubusercontent.com/wildlife-dynamics/mt-wildlife/main/resources/templates/mt_wildlife_report_template.docx"
+
 base:
   name: Integration Test
   mock_io: false
@@ -6,24 +49,24 @@ base:
       name: "Mara Triangle Wildlife Sightings"
       description: "Wildlife sighting analysis for Mara Triangle conservancy."
     time_range:
-      since: "2026-01-01T00:00:00"
-      until: "2026-01-31T23:59:59"
+      since: "2026-07-01T00:00:00"
+      until: "2026-07-31T23:59:59"
       timezone:
         label: "(GMT+03:00) Nairobi"
         tzCode: "Africa/Nairobi"
         name: "East Africa Time"
         utc: "+03:00"
-    smart_client_name:
+    er_client_name:
       data_source:
-        name: "mara_triangle"
+        name: "mmnr"
     featured_list:
       vars:
-        - "African Buffalo"
-        - "African Elephant"
+        - "Buffalo"
+        - "Elephant"
         - "Lion"
         - "Leopard"
-        - "Cheetah"
-        - "Giraffe"
+        - "Cheetah (inform Monitoring Team)"
+        - "Giraffe - Maasai"
         - "Zebra"
         - "Wildebeest"
     base_map_defs:
