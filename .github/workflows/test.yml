@@ -138,5 +138,5 @@ jobs:
           ECOSCOPE_WORKFLOWS__CONNECTIONS__SMART__MARA_TRIANGLE__USERNAME: ${{ secrets.SMART_USERNAME }}
           ECOSCOPE_WORKFLOWS__CONNECTIONS__SMART__MARA_TRIANGLE__PASSWORD: ${{ secrets.SMART_PASSWORD }}
         run: |
-          chmod +x dev/pytest-cli.sh || true
-          bash dev/pytest-cli.sh ${{ needs.discover.outputs.workflow_id }} --all
+          chmod +x dev/run-test-cases.sh || true
+          pixi run --manifest-path pixi.toml bash dev/run-test-cases.sh --all --quiet
