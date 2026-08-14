@@ -300,7 +300,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             df=filter_coords,
             columns=None,
             sanitize=True,
-            query='SELECT id, serial_number, time, geometry,\n  "Species",\n  COALESCE(CAST("Count" AS REAL), 0) AS "Count"\nFROM df WHERE "Species" IS NOT NULL',
+            query='SELECT id, serial_number, time, geometry,\n  TRIM(CASE WHEN instr("Species", \'(\') > 0\n       THEN substr("Species", 1, instr("Species", \'(\') - 1)\n       ELSE "Species" END) AS "Species",\n  COALESCE(CAST("Count" AS REAL), 0) AS "Count"\nFROM df WHERE "Species" IS NOT NULL',
             **(params.get("process_sightings") or {}),
         )
         .call()

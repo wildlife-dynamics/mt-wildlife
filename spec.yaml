@@ -21,7 +21,7 @@ rjsf-overrides:
       - "Elephant"
       - "Lion"
       - "Leopard"
-      - "Cheetah (inform Monitoring Team)"
+      - "Cheetah"
       - "Giraffe - Maasai"
       - "Zebra"
       - "Wildebeest"
@@ -143,7 +143,9 @@ workflow:
           sanitize: true
           query: >-
             SELECT id, serial_number, time, geometry,
-              "Species",
+              TRIM(CASE WHEN instr("Species", '(') > 0
+                   THEN substr("Species", 1, instr("Species", '(') - 1)
+                   ELSE "Species" END) AS "Species",
               COALESCE(CAST("Count" AS REAL), 0) AS "Count"
             FROM df
             WHERE "Species" IS NOT NULL
